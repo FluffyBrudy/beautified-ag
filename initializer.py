@@ -32,32 +32,38 @@ PACKAGE_INSTALLER_COMMANDS = {
 
 
 def identify_distro() -> Tuple[str, str]:
-    distro_name = None
     os_release_file = "/etc/os-release"
-    os_release_exist = os.path.exists(os_release_file)
-    if not os_release_exist:
-        # i am not sure if lsb_release exist only in debian. so i am checking id. if you want you can PR in github or gitlab
-        lsb_release_file = "/etc/lsb-release"
-        lsb_release_exist = os.path.exists(lsb_release_file)
-        if not lsb_release_exist:
-            raise Exception(log_message(UNKNOWN_DISTRO_ERROR, "error", True))
-    else:
-        file_content = open(os_release_file, "r")
-        distro_id = re.search(r'^ID="?(.*?)"?$', file_content.read(), re.MULTILINE)
-        if len(distro_id.groups()) == 0:
-            raise Exception(log_message(UNKNOWN_DISTRO_ERROR, "error", True))
+    lsb_release_file = "/etc/lsb-release"
 
-    distro_name = distro_id.groups()[0]
-    install_command = PACKAGE_INSTALLER_COMMANDS.get(distro_name, None)
+    distro_name = None
+
+    if os.path.exists(os_release_file):
+        with open(os_release_file, "r") as file:
+            match = re.search(r'^ID="?(\w+)"?$', file.read(), re.MULTILINE)
+    elif os.path.exists(lsb_release_file):
+        with open(lsb_release_file, "r") as file:
+            match = re.search(r'DISTRIB_ID="?(\w+)"?$', file.read(), re.MULTILINE)
+    else:
+        raise Exception(log_message(UNKNOWN_DISTRO_ERROR, "error", True))
+
+    if not match:
+        raise Exception(log_message(UNKNOWN_DISTRO_ERROR, "error", True))
+
+    distro_name = match.group(1).lower()
+
+    install_command = PACKAGE_INSTALLER_COMMANDS.get(distro_name)
     if not install_command:
         raise Exception(log_message(INSTALLER_NOT_FOUND_ERROR, "error", True))
-    return (distro_name, install_command)
+
+    return distro_name, install_command
 
 
 def grant_sudo_previlage(install_command: List[str] | Tuple[str]):
     retry_count = 0
+
     while True:
         password = getpass(f"password for {getuser()}: ")
+
         try:
             process = subprocess.Popen(
                 ["sudo", "-S", *install_command],
@@ -66,7 +72,10 @@ def grant_sudo_previlage(install_command: List[str] | Tuple[str]):
                 stderr=subprocess.PIPE,
                 text=True,
             )
+
             _, stderr = process.communicate(input=password)
+            password = ""
+
             if process.returncode == 0:
                 log_message("Successfully installed", log_type="success")
                 break
@@ -77,8 +86,10 @@ def grant_sudo_previlage(install_command: List[str] | Tuple[str]):
                 if retry_count == 3:
                     log_message("Max retries reached, exit...")
                     break
+            process.kill()
         except Exception as e:
             print(e)
+            process.kill()
             break
 
 
@@ -88,6 +99,7 @@ def check_dep_exists():
 
 def prompt_install_request():
     message = log_message(REQUIRE_SUDO_MESSAGE, "warning", True)
+
     while True:
         choice = input(message).lower()
         if choice not in ("y", "n", "yes", "no"):
