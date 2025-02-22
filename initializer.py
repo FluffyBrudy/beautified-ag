@@ -112,7 +112,7 @@ def prompt_install_request():
             return True
 
 
-if __name__ == "__main__":
+def init():
     distro, install_command = identify_distro()
     if not check_dep_exists():
         if prompt_install_request():

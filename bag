@@ -1,0 +1,72 @@
+import argparse
+from arguments import *
+from initializer import init
+import subprocess
+
+
+def main():
+    """
+    Ag command but beutify search result by presenting data
+    in 2d-table
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(**TERM)
+    parser.add_argument("--dir", **DIR)
+    args = parser.parse_args()
+    try:
+        result = subprocess.run(
+            ["ag", "--nobreak", "--noheading", args.term, args.dir],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        rows = result.stdout.splitlines()
+
+        filenames = []
+        lines = []
+        matches = []
+        max_filenames_col_len = 0
+        max_lines_col_len = 0
+        max_matches_col_len = 0
+        max_dash_lines = 0
+        for row in rows:
+            file, line, _match = row.split(":", 2)
+            max_filenames_col_len = max(max_filenames_col_len, len(file))
+            max_lines_col_len = max(max_lines_col_len, len(line))
+            max_matches_col_len = max(max_matches_col_len, len(_match))
+            filenames.append(file)
+            lines.append(line)
+            matches.append(_match.strip())
+        max_dash_lines = (
+            max_filenames_col_len + max_lines_col_len + max_matches_col_len + 2
+        )
+        print(
+            "-" * (max_filenames_col_len + max_lines_col_len + max_matches_col_len + 6)
+        )
+        print(
+            f"{'Filename'.ljust(max_filenames_col_len)} | "
+            f"{'Lines'.ljust(max_lines_col_len)} | "
+            f"{'Matches'.ljust(max_matches_col_len)}"
+        )
+        print(
+            "-" * (max_filenames_col_len + max_lines_col_len + max_matches_col_len + 6)
+        )
+
+        for file, line, _match in zip(filenames, lines, matches):
+            print(
+                f"{file.ljust(max_filenames_col_len)} | "
+                f"{line.ljust(max_lines_col_len + 5 - max_lines_col_len)} | "
+                f"{_match.ljust(max_matches_col_len)}"
+            )
+
+        print(
+            "-" * (max_filenames_col_len + max_lines_col_len + max_matches_col_len + 6)
+        )
+
+    except Exception as e:
+        raise Exception(e)
+
+
+if __name__ == "__main__":
+    init()
+    main()
