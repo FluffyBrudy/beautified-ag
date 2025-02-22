@@ -17,7 +17,7 @@ PACKAGE_INSTALLER_COMMANDS = {
     "debian": ["apt", "install", "silversearcher-ag"],
     "linuxmint": ["apt", "install", "silversearcher-ag"],
     "fedora": ["dnf", "install", "the_silver_searcher"],
-    # not checking version may require dnf for v8 in centos
+    ### not checking version may require dnf for v8 in centos
     "centos": ["yum", "install", "the_silver_searcher"],
     "rhel": ["yum", "install", "the_silver_searcher"],
     "arch": ["pacman", "-S", "the_silver_searcher"],
@@ -32,6 +32,7 @@ PACKAGE_INSTALLER_COMMANDS = {
 
 
 def identify_distro() -> Tuple[str, str]:
+    ### Not sure if lsb-release is avilable only on debian based distros
     os_release_file = "/etc/os-release"
     lsb_release_file = "/etc/lsb-release"
 

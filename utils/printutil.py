@@ -32,7 +32,6 @@ def log_message(
     print(formatted_msg)
 
 
-# Example usage
 if __name__ == "__main__":
     log_message("This is an error message.", log_type="error")
     log_message("This is a success message.", log_type="success")
@@ -48,7 +47,6 @@ if __name__ == "__main__":
         "This is a warning message.", log_type="warning", to_return=True
     )
 
-    # Log returned messages
     log_message(error_msg, log_type="stdout")
     log_message(success_msg, log_type="stdout")
     log_message(warning_msg, log_type="stdout")

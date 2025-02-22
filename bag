@@ -36,7 +36,9 @@ def main():
             max_matches_col_len = max(max_matches_col_len, len(_match))
             filenames.append(file)
             lines.append(line)
-            matches.append(_match.strip())
+            matches.append(
+                _match.strip().replace(args.term, f"\033[42m{args.term}\033[0m")
+            )
         max_dash_lines = (
             max_filenames_col_len + max_lines_col_len + max_matches_col_len + 2
         )
