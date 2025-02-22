@@ -4,11 +4,12 @@ from initializer import init
 import subprocess
 
 
-def main():
+def run_beautified_ag():
     """
     Ag command but beutify search result by presenting data
     in 2d-table
     """
+
     parser = argparse.ArgumentParser()
     parser.add_argument(**TERM)
     parser.add_argument("--dir", **DIR)
@@ -69,6 +70,10 @@ def main():
         raise Exception(e)
 
 
-if __name__ == "__main__":
+def main():
     init()
+    run_beautified_ag()
+
+
+if __name__ == "__main__":
     main()
