@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 from arguments import *
 from initializer import init
