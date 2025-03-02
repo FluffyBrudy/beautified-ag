@@ -2,34 +2,13 @@ from typing import Tuple, List
 
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from getpass import getpass, getuser
 from utils.printutil import log_message
-
-REQUIRE_SUDO_MESSAGE = "You need sudo preivilage to grant permissing to install, would you like to proceed (y/n|Y/N|yes/no|YES/NO): "
-AG_DOESNT_EXIST_ERROR = f"ag command doesnt exist, you need to install it."
-UNKNOWN_DISTRO_ERROR = "Failed to detect linux distribution"
-INSTALLER_NOT_FOUND_ERROR = "Failed to identify installer"
-
-PACKAGE_INSTALLER_COMMANDS = {
-    "ubuntu": ["apt", "install", "silversearcher-ag"],
-    "debian": ["apt", "install", "silversearcher-ag"],
-    "linuxmint": ["apt", "install", "silversearcher-ag"],
-    "fedora": ["dnf", "install", "the_silver_searcher"],
-    ### not checking version may require dnf for v8 in centos
-    "centos": ["yum", "install", "the_silver_searcher"],
-    "rhel": ["yum", "install", "the_silver_searcher"],
-    "arch": ["pacman", "-S", "the_silver_searcher"],
-    "manjaro": ["pacman", "-S", "the_silver_searcher"],
-    "opensuse": ["zypper", "install", "the_silver_searcher"],
-    "gentoo": ["emerge", "app-text/the_silver_searcher"],
-    "kali": ["apt", "install", "silversearcher-ag"],
-    "elementary": ["apt", "install", "silversearcher-ag"],
-    "slackware": ["slackpkg", "install", "the_silver_searcher"],
-    "void": ["xbps-install", "-S", "the_silver_searcher"],
-}
-
+from constants.installer import *
+from constants.errors import *
 
 def identify_distro() -> Tuple[str, str]:
     ### Not sure if lsb-release is avilable only on debian based distros
@@ -52,19 +31,17 @@ def identify_distro() -> Tuple[str, str]:
 
     distro_name = match.group(1).lower()
 
-    install_command = PACKAGE_INSTALLER_COMMANDS.get(distro_name)
+    return distro_name
+
+
+def grant_sudo_previlage(distro: str):
+    retry_count = 0
+
+    install_command = PACKAGE_INSTALLER_COMMANDS.get(distro)
     if not install_command:
         raise Exception(log_message(INSTALLER_NOT_FOUND_ERROR, "error", True))
 
-    return distro_name, install_command
-
-
-def grant_sudo_previlage(install_command: List[str] | Tuple[str]):
-    retry_count = 0
-
     while True:
-        password = getpass(f"password for {getuser()}: ")
-
         try:
             process = subprocess.Popen(
                 ["sudo", "-S", *install_command],
@@ -74,15 +51,14 @@ def grant_sudo_previlage(install_command: List[str] | Tuple[str]):
                 text=True,
             )
 
-            _, stderr = process.communicate(input=password)
-            password = ""
+            _, stderr = process.communicate(input=getpass(f"password for {getuser()}: "))
 
             if process.returncode == 0:
                 log_message("Successfully installed", log_type="success")
                 break
             else:
                 retry_count += 1
-                errmsg = "Incorrect password" if "incorrect" in stderr else stderr0
+                errmsg = "Incorrect password" if "incorrect" in stderr else stderr
                 log_message(errmsg, log_type="error")
                 if retry_count == 3:
                     log_message("Max retries reached, exit...")
@@ -114,7 +90,11 @@ def prompt_install_request():
 
 
 def init():
-    distro, install_command = identify_distro()
+    log_message("Note that if you have sudo command already run then even if you pass wrong password installation will proceed", "warning")
+    distro = identify_distro()
     if not check_dep_exists():
         if prompt_install_request():
-            grant_sudo_previlage(install_command)
+            grant_sudo_previlage(distro)
+
+if __name__ == "__main__":
+    init()

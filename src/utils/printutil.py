@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Literal
 
 
 def format_error(msg: Any) -> str:
@@ -15,7 +15,7 @@ def format_warning(msg: Any) -> str:
 
 def log_message(
     msg: Any,
-    log_type: Union["success", "error", "warning"] = None,
+    log_type: Literal["success", "error", "warning"] = None,
     to_return=False,
 ):
     if log_type == "error":

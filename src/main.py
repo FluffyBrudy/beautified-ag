@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from argparse import ArgumentError
 from arguments import *
 from initializer import init
 import subprocess
@@ -12,10 +13,17 @@ def run_beautified_ag():
     in 2d-table
     """
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(**TERM)
-    parser.add_argument("--dir", **DIR)
-    args = parser.parse_args()
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument(**TERM)
+        parser.add_argument("--dir", **DIR)
+        args = parser.parse_args()
+        
+        if not args.dir or not args.term:
+            parser.print_help()
+            return
+    except ArgumentError as e:
+        print('error')
     try:
         result = subprocess.run(
             ["ag", "--nobreak", "--noheading", args.term, args.dir],
@@ -67,9 +75,14 @@ def run_beautified_ag():
         print(
             "-" * (max_filenames_col_len + max_lines_col_len + max_matches_col_len + 6)
         )
-
+    except subprocess.CalledProcessError as e:
+        if e.returncode == 1:
+            print(f"No match found, (STATUS_CODE: {e.returncode})")
+        else:
+            print(f"{e.stderr}, (STATUS_CODE: {e.returncode})")
     except Exception as e:
-        raise Exception(e)
+         print(f"{e.stderr}, (STATUS_CODE: ${e.returncode})")
+    
 
 
 def main():
