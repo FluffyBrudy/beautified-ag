@@ -19,14 +19,14 @@ def run_beautified_ag():
         parser.add_argument("--dir", **DIR)
         args = parser.parse_args()
         
-        if not args.dir or not args.term:
+        if not args.term:
             parser.print_help()
             return
     except ArgumentError as e:
         print('error')
     try:
         result = subprocess.run(
-            ["ag", "--nobreak", "--noheading", args.term, args.dir],
+            ["ag", "--nobreak", "--noheading", args.term, args.dir or '.'],
             capture_output=True,
             text=True,
             check=True,
