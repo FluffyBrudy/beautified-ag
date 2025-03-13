@@ -39,7 +39,8 @@ def grant_sudo_previlage(distro: str):
 
     install_command = PACKAGE_INSTALLER_COMMANDS.get(distro)
     if not install_command:
-        raise Exception(log_message(INSTALLER_NOT_FOUND_ERROR, "error", True))
+        log_message(INSTALLER_NOT_FOUND_ERROR, "error")
+        exit(1)
 
     while True:
         try:
